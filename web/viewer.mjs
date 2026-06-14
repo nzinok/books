@@ -7841,8 +7841,8 @@ class PDFLinkService {
     if (hash.includes("=")) {
       const params = (0,_ui_utils_js__WEBPACK_IMPORTED_MODULE_0__.parseQueryString)(hash);
       if (params.has("search")) {
-        const query = params.get("search").replaceAll('"', ""),
-          phrase = params.get("phrase") === "true";
+        const query = params.get("search"),
+      phrase = params.get("phrase") === "true";
         this.eventBus.dispatch("findfromurlhash", {
           source: this,
           query: phrase ? query : query.match(/\S+/g)
