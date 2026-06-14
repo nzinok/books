@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>הגהת ספרים חכמה</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #525659; }
+        iframe { width: 100%; height: 100%; border: none; position: relative; z-index: 2; }
+        .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: sans-serif; font-size: 24px; color: white; z-index: 1; }
+    </style>
+</head>
+<body>
+    <div class="loading">טוען ספר ועמוד...</div>
+    <iframe id="pdf-viewer"></iframe>
+    <script>
+        // משיכת הקובץ והעמוד מהקישור של אקסל
+        const params = new URLSearchParams(window.location.search);
+        const file = params.get('file');
+        const page = params.get('page');
+
+        if(file && page) {
+            const iframe = document.getElementById('pdf-viewer');
+            iframe.src = file + "#page=" + page;
+            
+            // הקסם נגד נטפרי: גם אם נטפרי הפנה מחדש ומחק את העמוד, אנחנו דוחפים אותו בכוח חזרה
+            iframe.onload = function() {
+                setInterval(function() {
+                    try {
+                        if(iframe.contentWindow.location.hash !== "#page=" + page) {
+                            iframe.contentWindow.location.hash = "page=" + page;
+                        }
+                    } catch(e) {}
+                }, 500);
+            };
+        }
+    </script>
+</body>
+</html>
