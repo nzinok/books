@@ -2,28 +2,60 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מנתב הגהה חכם</title>
+    <title>מערכת הגהה מקצועית</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #333; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .loading { position: absolute; top: 20px; right: 20px; color: white; font-family: sans-serif; z-index: 10; background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 5px; font-size: 14px; }
+    </style>
 </head>
 <body>
-    <div style="font-family: sans-serif; text-align: center; margin-top: 50px; font-size: 20px;">
-        מכין את הספר והחיפוש המדויק...
-    </div>
+    <div id="loader" class="loading">מריץ חיפוש מדויק עם מרכאות...</div>
+    <iframe id="pdf-iframe"></iframe>
+
     <script>
-        // קריאת הפרמטרים הבטוחים שהגיעו מגוגל שיטס
+        // קריאת הנתונים שהגיעו מגוגל שיטס
         const params = new URLSearchParams(window.location.search);
         const file = params.get('file');
         const page = params.get('page');
         let search = params.get('search') || '';
 
         if (file && page) {
-            // הקסם: מחזירים את המרכאות והגרשיים האמיתיים שהסתרנו מהשיטס
+            // שחזור המרכאות והגרשיים המקוריים שהסתרנו מהשיטס
             search = search.replace(/_Q_/g, '"').replace(/_G_/g, '״');
             
-            // בניית הקישור המלא והמאובטח למנוע של מוזילה, כולל חיפוש ביטוי מדויק
-            const finalUrl = "web/viewer.html?file=../" + file + "#page=" + page + (search ? "&search=" + encodeURIComponent(search) + "&phrase=true" : "");
-            
-            // מעבר אוטומטי מיידי בתוך הדפדפן
-            window.location.href = finalUrl;
+            const iframe = document.getElementById('pdf-iframe');
+            // טעינת הספר לעמוד המבוקש (בלי פרמטר החיפוש ב-URL שמשבש אותו)
+            iframe.src = "web/viewer.html?file=../" + file + "#page=" + page;
+
+            // פונקציית הזרקה שמחקה הקלדה ידנית של המשתמש
+            function injectSearch() {
+                try {
+                    const app = iframe.contentWindow.PDFViewerApplication;
+                    // בדיקה האם מנוע ה-PDF עלה והוא מוכן לקבל פקודות
+                    if (app && app.initializedPromise) {
+                        app.initializedPromise.then(() => {
+                            // הזרקה ישירה לתוך ה-EventBus של התוכנה (מחקה לחלוטין לחיצת אנטר בתיבת החיפוש)
+                            setTimeout(() => {
+                                app.eventBus.dispatch("find", {
+                                    query: search,
+                                    phraseSearch: true,
+                                    highlightAll: true,
+                                    findPrevious: false
+                                });
+                                // העלמת הודעת הטעינה
+                                document.getElementById('loader').style.display = 'none';
+                            }, 600); // השהייה קלה כדי לוודא שהדף נחת בשלום
+                        });
+                    } else {
+                        setTimeout(injectSearch, 200);
+                    }
+                } catch (e) {
+                    setTimeout(injectSearch, 200);
+                }
+            }
+
+            injectSearch();
         }
     </script>
 </body>
